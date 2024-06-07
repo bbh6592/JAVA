@@ -1,0 +1,49 @@
+import java.util.*;
+
+public class Solution {
+    public int findCheapestPrice(int n, int[][] flights, int src, int dst, int K) {
+        // Create the graph
+        Map<Integer, List<int[]>> graph = new HashMap<>();
+        for (int[] flight : flights) {
+            graph.putIfAbsent(flight[0], new ArrayList<>());
+            graph.get(flight[0]).add(new int[]{flight[1], flight[2]});
+        }
+
+        // Min-heap priority queue: elements are int[] {cost, currentCity, stopsRemaining}
+        PriorityQueue<int[]> heap = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+        heap.offer(new int[]{0, src, K + 1}); // K + 1 because we start from src with 0 stops used
+
+        // Distance array to keep track of the minimum cost to reach each city with a specific number of stops
+        int[][] dist = new int[n][K + 2];
+        for (int[] row : dist) {
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+        dist[src][K + 1] = 0;
+
+        while (!heap.isEmpty()) {
+            int[] current = heap.poll();
+            int cost = current[0];
+            int city = current[1];
+            int stops = current[2];
+
+            if (city == dst) {
+                return cost;
+            }
+
+            if (stops > 0) {
+                List<int[]> neighbors = graph.getOrDefault(city, new ArrayList<>());
+                for (int[] neighbor : neighbors) {
+                    int nextCity = neighbor[0];
+                    int price = neighbor[1];
+
+                    if (cost + price < dist[nextCity][stops - 1]) {
+                        dist[nextCity][stops - 1] = cost + price;
+                        heap.offer(new int[]{cost + price, nextCity, stops - 1});
+                    }
+                }
+            }
+        }
+
+        return -1;
+    }
+}
